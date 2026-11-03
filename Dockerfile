@@ -1,12 +1,13 @@
 # Этап 1: Сборка
-FROM rust:1.75-slim AS builder
+# Используем Rust 1.85 (поддерживает edition 2024) на базе Debian Bookworm
+FROM rust:1.85-slim-bookworm AS builder
 
 WORKDIR /app
 
 # Копируем только Cargo.toml
 COPY Cargo.toml ./
 
-# Создаем заглушку для сборки зависимостей (без Cargo.lock)
+# Создаем заглушку для сборки зависимостей
 RUN mkdir src && echo "fn main() {}" > src/main.rs && \
     cargo build --release && \
     rm -rf src
@@ -31,7 +32,7 @@ COPY --from=builder /app/target/release/dcr_rust_shuttle /app/dcr_monitor
 # Копируем шаблоны (они нужны программе для работы)
 COPY --from=builder /app/templates ./templates
 
-# Открываем порт (RelaxDev обычно использует 8080)
+# Открываем порт
 EXPOSE 8080
 
 # Запускаем приложение
