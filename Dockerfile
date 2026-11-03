@@ -1,6 +1,9 @@
 # Этап 1: Сборка
 FROM rust:1.87-slim-bookworm AS builder
 
+# Устанавливаем утилиты и заголовки, необходимые для сборки (нужны для OpenSSL)
+RUN apt-get update && apt-get install -y pkg-config libssl-dev && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
 # Копируем Cargo.toml
@@ -21,7 +24,8 @@ RUN cargo build --release
 # Этап 2: Запуск
 FROM debian:bookworm-slim
 
-RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+# Устанавливаем сертификаты и библиотеку OpenSSL для запуска
+RUN apt-get update && apt-get install -y ca-certificates libssl3 && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
