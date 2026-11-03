@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>DCR Monitor (Rust)</title>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        table { border-collapse: collapse; width: 100%; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; font-size: 14px; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+        th { background-color: #f8f9fa; }
+        
+        /* Стили для подсветки тренда */
+        .row-up { background-color: #e8f5e9; }      /* Бледно-зеленый */
+        .row-up:hover { background-color: #c8e6c9; }
+        .row-down { background-color: #ffebee; }    /* Бледно-красный */
+        .row-down:hover { background-color: #ffcdd2; }
+        .row-neutral:hover { background-color: #f5f5f5; }
+
+        .btn { padding: 10px 20px; font-size: 16px; cursor: pointer; border: none; border-radius: 4px; text-decoration: none; color: white; display: inline-block; }
+        .btn-primary { background-color: #0066cc; }
+        .btn-secondary { background-color: #555; }
+        .btn-test { background-color: #6c757d; }
+        .text-green { color: #2e7d32; }
+        .text-red { color: #c62828; }
+
+        .controls { display: flex; align-items: center; gap: 15px; margin-top: 20px; position: relative; flex-wrap: wrap; }
+        .loading-text { color: #666; font-size: 14px; opacity: 0; transition: opacity 200ms ease-in; position: absolute; left: 450px; pointer-events: none; }
+        .htmx-request .loading-text { opacity: 1; }
+
+        #tg-result { font-weight: bold; font-size: 16px; padding: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Мониторинг DCR (Rust)</h1>
+    
+    <div id="data-container">
+        {% include "table.html" %}
+    </div>
+    
+    <div class="controls">
+        <button class="btn btn-primary" hx-get="/refresh-data" hx-target="#data-container" hx-indicator="#controls-indicator">
+            🔄 Обновить
+        </button>
+        
+        <a href="/history" class="btn btn-secondary">📊 История</a>
+
+        <button class="btn btn-test" 
+                hx-post="/test-telegram" 
+                hx-target="#tg-result" 
+                hx-swap="innerHTML"
+                hx-indicator="#tg-spinner">
+            ✉️ Тест Telegram
+        </button>
+        
+        <span id="tg-result"></span>
+        <span id="tg-spinner" class="htmx-indicator" style="color: #666;">⏳ Отправляю...</span>
+
+        <div id="controls-indicator">
+            <span class="loading-text">Обновляю...</span>
+        </div>
+    </div>
+</body>
+</html>

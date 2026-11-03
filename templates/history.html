@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>История DCR (Rust)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        table { border-collapse: collapse; width: 100%; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-top: 20px; margin-bottom: 20px; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+        th { background-color: #f8f9fa; }
+        .chart-container { position: relative; height: 350px; width: 100%; margin-bottom: 20px; }
+        .btn { padding: 8px 16px; font-size: 14px; cursor: pointer; border: none; border-radius: 4px; text-decoration: none; color: white; display: inline-block; background-color: #555; }
+        .btn:hover { opacity: 0.9; }
+        .filter-btn { padding: 6px 12px; font-size: 14px; text-decoration: none; color: #0066cc; border: 1px solid #0066cc; border-radius: 4px; margin-right: 5px; }
+        .filter-btn.active { background-color: #0066cc; color: white; }
+        
+        details { margin-top: 10px; }
+        summary { cursor: pointer; padding: 10px; background-color: #f0f0f0; border-radius: 4px; font-weight: bold; user-select: none; }
+        summary:hover { background-color: #e0e0e0; }
+    </style>
+</head>
+<body>
+    <h1>История DCR (Rust)</h1>
+    
+    <div style="margin-bottom: 20px;">
+        <a href="/" class="btn">← На главную</a>
+        <span style="margin-left: 20px;">
+            <a href="/history?period=1h" class="filter-btn {% if current_period == "1h" %}active{% endif %}">1 час</a>
+            <a href="/history?period=24h" class="filter-btn {% if current_period == "24h" %}active{% endif %}">24 часа</a>
+            <a href="/history?period=7d" class="filter-btn {% if current_period == "7d" %}active{% endif %}">7 дней</a>
+            <a href="/history?period=all" class="filter-btn {% if current_period == "all" %}active{% endif %}">Все</a>
+        </span>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="priceChart"></canvas>
+    </div>
+
+    {% if rows.is_empty() %}
+        <p style="color: #777;">Нет данных за выбранный период.</p>
+    {% else %}
+        <h3>Последние 5 записей</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Источник</th>
+                    <th>Цена (USD)</th>
+                    <th>Объём 24ч</th>
+                    <th>Дата</th>
+                    <th>Время</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                    {% if loop.index <= 5 %}
+                    <tr>
+                        <td>{{ row.source }}</td>
+                        <td>${{ row.price }}</td>
+                        <td>${{ row.volume }}</td>
+                        <td>{{ row.date }}</td>
+                        <td>{{ row.time }}</td>
+                    </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if rows.len() > 5 %}
+        <details>
+            <summary>Показать все записи (ещё {{ rows.len() - 5 }})</summary>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Источник</th>
+                        <th>Цена (USD)</th>
+                        <th>Объём 24ч</th>
+                        <th>Дата</th>
+                        <th>Время</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                        {% if loop.index > 5 %}
+                        <tr>
+                            <td>{{ row.source }}</td>
+                            <td>${{ row.price }}</td>
+                            <td>${{ row.volume }}</td>
+                            <td>{{ row.date }}</td>
+                            <td>{{ row.time }}</td>
+                        </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </details>
+        {% endif %}
+    {% endif %}
+
+    <script>
+        const cpData = {{ chart_data_cp|safe }};
+        const cmcData = {{ chart_data_cmc|safe }};
+
+        new Chart(document.getElementById('priceChart'), {
+            type: 'line',
+            data: {
+                datasets: [
+                    {
+                        label: 'CoinPaprika',
+                        data: cpData,
+                        borderColor: '#0066cc',
+                        backgroundColor: 'rgba(0, 102, 204, 0.1)',
+                        tension: 0.2,
+                        fill: false
+                    },
+                    {
+                        label: 'CoinMarketCap',
+                        data: cmcData,
+                        borderColor: '#2e7d32',
+                        backgroundColor: 'rgba(46, 125, 50, 0.1)',
+                        tension: 0.2,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                scales: {
+                    x: { type: 'time', time: { displayFormats: { hour: 'HH:mm', day: 'dd.MM' } } },
+                    y: { beginAtZero: false, ticks: { callback: v => '$' + v.toFixed(2) } }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

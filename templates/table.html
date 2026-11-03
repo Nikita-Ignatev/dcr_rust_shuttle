@@ -1,0 +1,29 @@
+<table>
+    <thead>
+        <tr>
+            <th>Источник</th>
+            <th>Цена (USD)</th>
+            <th>Объём 24ч</th>
+            <th>Дата</th>
+            <th>Время</th>
+            <th>Спред</th>
+            <th>Волатильность</th>
+            <th>Δ Объёма</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in rows %}
+        <!-- Добавляем класс тренда к строке -->
+        <tr class="{{ row.trend_class }}">
+            <td>{{ row.source }}</td>
+            <td>${{ row.price }}</td>
+            <td>${{ row.volume }}</td>
+            <td>{{ row.date }}</td>
+            <td>{{ row.time }}</td>
+            <td>{{ row.spread }}</td>
+            <td>{{ row.volatility }}</td>
+            <td class="{% if row.volume_change.starts_with('+') %}text-green{% else %}text-red{% endif %}">{{ row.volume_change }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
