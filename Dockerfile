@@ -9,7 +9,7 @@ WORKDIR /app
 # Копируем Cargo.toml
 COPY Cargo.toml ./
 
-# Создаем заглушку для сборки зависимостей
+# Создаем заглушку для кэширования зависимостей
 RUN mkdir src && echo "fn main() {}" > src/main.rs && \
     cargo build --release && \
     rm -rf src
@@ -18,12 +18,12 @@ RUN mkdir src && echo "fn main() {}" > src/main.rs && \
 COPY src ./src
 COPY templates ./templates
 
-# Собираем финальный бинарник
-RUN cargo build --release
+# ВАЖНО: Обновляем время файла (touch), чтобы Cargo гарантированно 
+# пересобрал настоящий код, а не взял пустую заглушку из кэша
+RUN touch src/main.rs && cargo build --release
 
-# Находим собранный файл, даем ему имя 'myapp' и кладем в корень /app
-# Это избавит нас от необходимости угадывать имя из Cargo.toml
-RUN cp target/release/$(ls target/release/ | grep -v -E '^(build|deps|examples|incremental)$' | grep -v '\.d$' | head -n 1) /app/myapp
+# Копируем бинарник с правильным именем (dcr_rust)
+RUN cp target/release/dcr_rust /app/myapp
 
 # Этап 2: Запуск
 FROM debian:bookworm-slim
@@ -33,9 +33,8 @@ RUN apt-get update && apt-get install -y ca-certificates libssl3 && rm -rf /var/
 
 WORKDIR /app
 
-# Копируем наш переименованный бинарник
+# Копируем бинарник и шаблоны
 COPY --from=builder /app/myapp /app/dcr_monitor
-# Копируем шаблоны
 COPY --from=builder /app/templates ./templates
 
 EXPOSE 8080
