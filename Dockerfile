@@ -3,8 +3,10 @@ FROM rust:1.75-slim AS builder
 
 WORKDIR /app
 
-# Копируем манифесты для кэширования зависимостей
-COPY Cargo.toml Cargo.lock ./
+# Копируем только Cargo.toml
+COPY Cargo.toml ./
+
+# Создаем заглушку для сборки зависимостей (без Cargo.lock)
 RUN mkdir src && echo "fn main() {}" > src/main.rs && \
     cargo build --release && \
     rm -rf src
@@ -25,7 +27,7 @@ RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/
 WORKDIR /app
 
 # Копируем собранный бинарник из первого этапа
-COPY --from=builder /app/target/release/dcr_rust /app/dcr_monitor
+COPY --from=builder /app/target/release/dcr_rust_shuttle /app/dcr_monitor
 # Копируем шаблоны (они нужны программе для работы)
 COPY --from=builder /app/templates ./templates
 
